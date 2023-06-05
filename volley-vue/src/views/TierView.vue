@@ -50,18 +50,20 @@ export default {
         }
     },
     mounted: async function () {
-      const usersImpt = await import("../../public/users.js");
-      const userdata = usersImpt.default.data;
+      const infoData = await fetch("http://localhost:3000/info");
+      const dataInfo = await infoData.json();
+
       let data = await fetch("http://localhost:3000/votes");
       let voteInfo = await data.json();
+      
       const user = await getCurrentUser();
       let images = {}
-      userdata.forEach((user, index) => {  
+      dataInfo.forEach((user, index) => {  
         let image = new Image(100,85);
-        image.src = user.image;
+        image.src = user.photo;
         image.style.pointerEvents = 'none';
         image.alt = user.name;
-        images[image.alt] = user.image;
+        images[image.alt] = user.photo;
       });
         let rows = document.getElementsByClassName('sort');
         Array.from(rows).forEach(row => {

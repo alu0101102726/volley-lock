@@ -37,6 +37,10 @@
 import { getCurrentUser } from 'vuefire';
 import VueAvatar from "@webzlodimir/vue-avatar";
 import "@webzlodimir/vue-avatar/dist/style.css";
+
+const getBase64StringFromDataURL = (dataURL) =>
+    dataURL.replace('data:', '').replace(/^.+,/, '');
+
 export default {
   data() {
       return {
@@ -46,25 +50,24 @@ export default {
       }
   },
   methods: {
+
     async customBase64Uploader(event) {
       const vueProfile = document.querySelector(".profimage");
       const file = event.files[0];
       const reader = new FileReader();
-      let blob = await fetch(file.objectURL).then((r) => r.blob())
+      reader.readAsBinaryString(file);
+      const user = this.user;
 
-      reader.readAsDataURL(blob);
-
-      reader.onloadend = function () {
-          const base64data = reader.result;
-          console.log(base64data);
-          vueProfile.setAttribute("src", base64data)
-          vueProfile.setAttribute("alt", "Foto de perfil")
+      reader.onload = function (event) {
+          vueProfile.setAttribute("src", `data:${file.type};base64,${btoa(event.target.result)}`)
+          vueProfile.setAttribute("alt", user)
       };
     },
+
     async sendNewInfo() {
       const vueProfile = document.querySelector(".profimage");
       const user = await getCurrentUser();
-      const imageObj = {id: user.uid, name: user.displayName, email: user.email, photo: vueProfile.getAttribute("src")}
+      const imageObj = {id: user.uid, name: user.displayName, email: user.email, photo: vueProfile.getAttribute("src").toString()}
       let endpoint = "http://localhost:3000/profile";
       const options = {
         method: "POST",
@@ -75,7 +78,6 @@ export default {
       await fetch(endpoint, options);
     }
   },
-  
   mounted: async () => {
     const user = await getCurrentUser();
     const profile = await fetch(`http://localhost:3000/${user.uid}`);
