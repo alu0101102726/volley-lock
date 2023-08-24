@@ -28,7 +28,7 @@
 
     <div id="char4 row" class="sort ui-sortable" style="padding-top:25px;">
       <img class="profile" v-for="image in Object.keys(images)"
-           v-bind:key="images[image].name"
+           v-bind:key="images[image].alt"
            :alt="image"
            :src="images[image]">
     </div>
@@ -50,45 +50,38 @@ export default {
         }
     },
     mounted: async function () {
-      const infoData = await fetch("http://localhost:3000/info");
+      const infoData = await fetch("https://volley-ranking-server.onrender.com/info");
       const dataInfo = await infoData.json();
 
-      let data = await fetch("http://localhost:3000/votes");
+      let data = await fetch("https://volley-ranking-server.onrender.com/votes");
       let voteInfo = await data.json();
       
       const user = await getCurrentUser();
       let images = {}
-      dataInfo.forEach((user, index) => {  
+      dataInfo.forEach((datas, index) => {  
+        let user = JSON.parse(datas);
         let image = new Image(100,85);
         image.src = user.photo;
         image.style.pointerEvents = 'none';
         image.alt = user.name;
         images[image.alt] = user.photo;
       });
-        let rows = document.getElementsByClassName('sort');
-        Array.from(rows).forEach(row => {
-            new Sortable(row, {
-                group: 'shared', // set both lists to same group
-                animation: 500
-            });
-        });
-        this.images = images;
 
-        voteInfo.forEach(element => {
-          const voteData = JSON.parse(element);
-          if (voteData.id == user.uid) {
-            Object.keys(voteData.data).forEach(vote => {
-              const value = voteData.data[vote];
-              const div = document.querySelector(`.label${value}`);
-              let imageLabel = new Image(96,96);
-              imageLabel.src = images[vote];
-              imageLabel.style.pointerEvents = 'none';
-              imageLabel.alt = vote;
-              console.log(div)
-              div.appendChild(imageLabel);
-            })
-          }
-        })
+      voteInfo.forEach(element => {
+        const voteData = JSON.parse(element);
+        if (voteData.id == user.uid) {
+          Object.keys(voteData.data).forEach(vote => {
+            const value = voteData.data[vote];
+            const div = document.querySelector(`.label${value}`);
+            let imageLabel = new Image(96,96);
+            imageLabel.src = images[vote];
+            imageLabel.style.pointerEvents = 'none';
+            imageLabel.alt = vote;
+            div.appendChild(imageLabel);
+          })
+        }
+      })
+      this.images = images;
     },
 
     methods: {
@@ -96,7 +89,7 @@ export default {
       async fetchPostVotes(data) {
         const user = await getCurrentUser();
         data.id = user.uid;
-        let endpoint = "http://localhost:3000/vote";
+        let endpoint = "https://volley-ranking-server.onrender.com/vote";
         const options = {
           method: "POST",
           headers: {'Content-Type': "application/x-www-form-urlencoded"},

@@ -19,7 +19,7 @@ import NavBar from './NavBar.vue'
     mestra los componentes y funciones por si se necesitaran entender y modificar en un futuro. 
     <br />
     Por otro lado, también se encuentra disponible la documentación de la  
-    <a href="http://localhost:3000/docs" target="_blank" rel="noopener">API</a> 
+    <a href="https://volley-ranking-server.onrender.com/docs" target="_blank" rel="noopener">API</a> 
     utilizada para este sistema
   </WelcomeItem>
 

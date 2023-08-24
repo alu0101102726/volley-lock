@@ -44,7 +44,7 @@ export default {
     mounted: async function () {
       const usersImpt = await import("../../public/users.js");
       const userdata = usersImpt.default.data;
-      let data = await fetch("http://localhost:3000/votes");
+      let data = await fetch("https://volley-ranking-server.onrender.com/votes");
       let voteInfo = await data.json();
       const user = await getCurrentUser();
       let images = {}
@@ -85,7 +85,7 @@ export default {
       async fetchPostVotes(data) {
         const user = await getCurrentUser();
         data.id = user.uid;
-        let endpoint = "http://localhost:3000/vote";
+        let endpoint = "https://volley-ranking-server.onrender.com/vote";
         const options = {
           method: "POST",
           headers: {'Content-Type': "application/x-www-form-urlencoded"},
