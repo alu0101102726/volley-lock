@@ -68,7 +68,7 @@ export default {
       const vueProfile = document.querySelector(".profimage");
       const user = await getCurrentUser();
       const imageObj = {id: user.uid, name: user.displayName, email: user.email, photo: vueProfile.getAttribute("src").toString()}
-      let endpoint = "https://volley-ranking-server.onrender.com/profile";
+      let endpoint = "192.168.1.78:3000/profile";
       const options = {
         method: "POST",
         headers: {'Content-Type': "application/x-www-form-urlencoded"},
@@ -80,7 +80,7 @@ export default {
   },
   mounted: async () => {
     const user = await getCurrentUser();
-    const profile = await fetch(`https://volley-ranking-server.onrender.com/${user.uid}`);
+    const profile = await fetch(`192.168.1.78:3000/${user.uid}`);
     const data = await profile.json();
     const vueProfile = document.querySelector(".profimage");
     if(user != null) {

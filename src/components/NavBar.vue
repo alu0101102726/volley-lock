@@ -98,7 +98,7 @@ export default {
     },
 
     async fetchPostRegister(data) {
-      let endpoint = "https://volley-ranking-server.onrender.com/register";
+      let endpoint = "192.168.1.78:3000/register";
       const options = {
         method: "POST",
         headers: {'Content-Type': "application/x-www-form-urlencoded"},

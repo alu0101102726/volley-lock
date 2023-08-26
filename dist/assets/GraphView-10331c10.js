@@ -1,1 +1,0 @@
-import{_ as e,o as s,c as t,b as _}from"./index-98e0f495.js";const o={},a={class:"about"},c=_("h1",null,"This is an graph page",-1),n=[c];function r(i,d){return s(),t("div",a,n)}const l=e(o,[["render",r]]);export{l as default};
