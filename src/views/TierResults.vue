@@ -30,78 +30,86 @@
 
 <script>
 import Sortable from 'sortablejs'
-import { getCurrentUser } from 'vuefire';
+import { getFirestore, where, getDocs, collection, query, doc, getDoc, setDoc } from "firebase/firestore";
+const db = getFirestore();
 
 export default {
     data() {
         return {
             project: 'default',
             listName: 'VolleyLock',
-            images: {},
+            images: [],
+            maxValue: 0,
+            peopleVoted: 0,
             loading: false
         }
-    },
-    mounted: async function () {
-      const usersImpt = await import("../../public/users.js");
-      const userdata = usersImpt.default.data;
-      let data = await fetch("192.168.1.78:3000/votes");
-      let voteInfo = await data.json();
-      const user = await getCurrentUser();
-      let images = {}
-      userdata.forEach((user, index) => {  
-        let image = new Image(100,85);
-        image.src = user.image;
-        image.style.pointerEvents = 'none';
-        image.alt = user.name;
-        images[image.alt] = user.image;
-      });
-        let rows = document.getElementsByClassName('sort');
-        Array.from(rows).forEach(row => {
-            new Sortable(row, {
-                group: 'shared', // set both lists to same group
-                animation: 500
-            });
-        });
-        this.images = images;
-
-        voteInfo.forEach(element => {
-          const voteData = JSON.parse(element);
-          if (voteData.id == user.uid) {
-            Object.keys(voteData.data).forEach(vote => {
-              const value = voteData.data[vote];
-              const div = document.querySelector(`.label${value}`);
-              let imageLabel = new Image(96,96);
-              imageLabel.src = images[vote];
-              imageLabel.style.pointerEvents = 'none';
-              imageLabel.alt = vote;
-              div.appendChild(imageLabel);
-            })
-          }
-        })
     },
 
     methods: {
 
-      async fetchPostVotes(data) {
-        const user = await getCurrentUser();
-        data.id = user.uid;
-        let endpoint = "192.168.1.78:3000/vote";
-        const options = {
-          method: "POST",
-          headers: {'Content-Type': "application/x-www-form-urlencoded"},
-          mode: 'no-cors',
-          body: JSON.stringify(data)
-        };
-        await fetch(endpoint, options);
+      getEmptyBoard() {
+        for(let i = 1; i <= 6; i++) {
+          const div = document.querySelector(`.label${i}`);
+          var child = div.lastElementChild; 
+          while (child) {
+            div.removeChild(child);
+            child = div.lastElementChild;
+          }
+        }
+      },
 
+      async getImages() {
+        const q = query(collection(db, "users"), where("email", "not-in", ["voleylock@gmail.com"]));
+        const queryUserSnap = await getDocs(q);
+
+        queryUserSnap.forEach((users, index) => {  
+          if(users.data().voted) {
+            this.peopleVoted += 1;
+          }
+          this.images.push({src: users.data().photo, alt: users.data().name, list: 0});
+        });
+      },
+
+      async getVotes() {
+        const q = query(collection(db, "votes"));
+        const queryDatesSnap = await getDocs(q); 
+        const votes = queryDatesSnap.docs[0].data();
+        this.peopleVoted = (this.peopleVoted > 1) ? this.peopleVoted - 1 : this.peopleVoted;
+        this.maxValue = this.peopleVoted * 6;
+        this.images.forEach((user) => {
+          Object.getOwnPropertyNames(votes.votes).forEach((vote) => {
+            if(user.alt == vote) {
+              const value = Math.floor(votes.votes[`${vote}`] / this.peopleVoted);
+              const div = document.querySelector(`.label${value}`);
+              let imageLabel = new Image(96,96);
+              imageLabel.src = user.src;
+              imageLabel.style.pointerEvents = 'none';
+              imageLabel.alt = user.alt;
+              div.appendChild(imageLabel);
+            }
+          })
+        })
       }
+    },
+    mounted() {
+      this.getEmptyBoard();
+      let rows = document.getElementsByClassName('sort');
+      Array.from(rows).forEach(row => {
+          new Sortable(row, {
+              group: 'shared', // set both lists to same group
+              animation: 500
+          });
+      });
+
+      this.getImages();   
+      this.getVotes();
     },
 
 
 }
 </script>
 
-<style>
+<style scoped>
   
   .tier-list {
     margin-top: 10%;

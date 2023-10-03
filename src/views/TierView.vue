@@ -1,5 +1,5 @@
 <template>
-  <div class="tier-list">
+  <div class="tier-list" v-if="!voted">
     <h1>TIER LIST - {{ listName }}</h1>
     <div class="list-group row">
       <input type="text" value="S" class="tier6 level" readonly>
@@ -25,12 +25,12 @@
       <input type="text" value="E" class="tier1 level" readonly>
       <div class="tier label1 sort ui-sortable"></div>
     </div>
-
-    <div id="char4 row" class="sort ui-sortable" style="padding-top:25px;">
-      <img class="profile" v-for="image in Object.keys(images)"
-           v-bind:key="images[image].alt"
-           :alt="image"
-           :src="images[image]">
+    <div id="char4 row" class="sort ui-sortable" style="padding-top:25px;" >
+      <img class="profile" v-for="image in images"
+           v-bind:key="image.alt"
+           :id="image.alt"
+           :alt="image.alt"
+           :src="image.src">
     </div>
     <Button type="button" label="Enviar Resultados" icon="pi pi-check" :loading="loading" @click="sendInformation()"/>
   </div>
@@ -38,76 +38,45 @@
 
 <script>
 import Sortable from 'sortablejs'
+import { User, userConverter } from '../User.js';
+import { getFirestore, where, getDocs, collection, query, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { getCurrentUser } from 'vuefire';
+const db = getFirestore();
 
 export default {
-    data() {
-        return {
-            project: 'default',
-            listName: 'VolleyLock',
-            images: {},
-            loading: false
-        }
-    },
-    mounted: async function () {
-      const infoData = await fetch("192.168.1.78:3000/info");
-      const dataInfo = await infoData.json();
-
-      let data = await fetch("192.168.1.78:3000/votes");
-      let voteInfo = await data.json();
-      
-      const user = await getCurrentUser();
-      let images = {}
-      dataInfo.forEach((datas, index) => {  
-        let user = JSON.parse(datas);
-        let image = new Image(100,85);
-        image.src = user.photo;
-        image.style.pointerEvents = 'none';
-        image.alt = user.name;
-        images[image.alt] = user.photo;
-      });
-
-      voteInfo.forEach(element => {
-        const voteData = JSON.parse(element);
-        if (voteData.id == user.uid) {
-          Object.keys(voteData.data).forEach(vote => {
-            const value = voteData.data[vote];
-            const div = document.querySelector(`.label${value}`);
-            let imageLabel = new Image(96,96);
-            imageLabel.src = images[vote];
-            imageLabel.style.pointerEvents = 'none';
-            imageLabel.alt = vote;
-            div.appendChild(imageLabel);
-          })
-        }
-      })
-      this.images = images;
-    },
+  data() {
+    return {
+      listName: 'Volley Lock',
+      images: [],
+      loading: false,
+      voted: false
+    }
+  },
 
     methods: {
 
-      async fetchPostVotes(data) {
+      async getImages() {
         const user = await getCurrentUser();
-        data.id = user.uid;
-        let endpoint = "192.168.1.78:3000/vote";
-        const options = {
-          method: "POST",
-          headers: {'Content-Type': "application/x-www-form-urlencoded"},
-          mode: 'no-cors',
-          body: JSON.stringify(data)
-        };
-        await fetch(endpoint, options);
+        const q = query(collection(db, "users"), where("email", "not-in", [user.email, "voleylock@gmail.com"]));
+        const queryUserSnap = await getDocs(q);
 
-      },
-      modifyJSON(newJSON) {
-        this.loading = false;
-        this.fetchPostVotes(newJSON)
+        queryUserSnap.forEach((users, index) => {  
+          this.images.push({src: users.data().photo, alt: users.data().name, list: 0});
+        });
       },
 
-      sendInformation() {
+      async sendInformation() {
         this.loading = true;
-        let JSONresult = {data: {}};
+        const user = await getCurrentUser();
+        const userRef = doc(db, "users", user.uid).withConverter(userConverter);    
+        const q = query(collection(db, "votes"));
+        const queryDatesSnap = await getDocs(q); 
+        const votes = queryDatesSnap.docs[0].data();
+        const endDate = new Date(votes.endDate.toDate())
+        const dateRef = doc(db, "votes", `${endDate.getDate()}-${endDate.getMonth() + 1}-${endDate.getFullYear()}`);      
+        const userSnap = await getDoc(userRef);
         const tiers = document.querySelectorAll('.list-group');
+        let curentVotes = {};
         tiers.forEach((row, index) => {
           const tier = row.querySelector('.level').value;
           const people = row.querySelector('.sort').childNodes;
@@ -134,31 +103,62 @@ export default {
                 score = 1;
               break;
             }
-            JSONresult.data[`${currentImage.alt}`] = score;
+            console.log(votes.votes[`${currentImage.alt}`]);
+            if(votes.votes[`${currentImage.alt}`]) {
+              votes.votes[`${currentImage.alt}`] += score
+            }
+            else {              
+              votes.votes[`${currentImage.alt}`] = score;
+            }
+            curentVotes[`${currentImage.alt}`] = score
           }
         });
-        this.$swal({
-          title: "¿Seguro que quieres registrar los datos?",
-          text: "Una vez mandado no podrás volver a votar",
-          icon: "warning",
-          showCancelButton: true   
-        }).then((result) => {
-          if (result.isConfirmed) {
-            this.$swal('Enviado!', '', 'success')
-            this.modifyJSON(JSONresult)
-          } else {
-            this.$swal('Puedes seguir editando!', '', 'info')
-          }
-        })
+
+        if(!userSnap.data().voted) {
+          this.$swal({
+            title: "¿Seguro que quieres registrar los datos?",
+            text: "Una vez mandado no podrás volver a votar",
+            icon: "warning",
+            showCancelButton: true   
+          }).then((result) => {
+            if (result.isConfirmed) {
+              const userFirestore = new User(userSnap.data().id, userSnap.data().name, userSnap.data().email, userSnap.data().photo, true, curentVotes);
+              console.log(dateRef,votes)  
+              if (userSnap.exists()) {
+                  setDoc(userRef, userFirestore);
+                  setDoc(dateRef, votes);
+                  this.voted = true;
+              }
+              this.$swal('Enviado!', '', 'success')
+            } else {
+              this.$swal('Puedes seguir editando!', '', 'info')
+            }
+          })
+        }
+        else {          
+          this.$swal('Ya has votado!', '', 'info')
+        }
+        this.loading = false;
         
       }
+    },
+    mounted() {
+      let rows = document.getElementsByClassName('sort');
+      Array.from(rows).forEach(row => {
+          new Sortable(row, {
+              group: 'shared', // set both lists to same group
+              animation: 500
+          });
+      });
+      
+      this.getImages();      
     },
 
 
 }
 </script>
 
-<style>
+<style scoped>
   
   .tier-list {
     margin-top: 10%;
@@ -228,6 +228,12 @@ export default {
     background-color: #627ee0;
   }
 
+  .drag-el {
+    background-color: #fff;
+    margin-bottom: 10px;
+    padding: 5px;
+  }
+
   #char4 {
     width: 100%;
     margin: 10px auto;
@@ -238,5 +244,6 @@ export default {
   img.profile {
     width: 96px;
     height: 96px;
+    cursor: move;
   }
 </style>

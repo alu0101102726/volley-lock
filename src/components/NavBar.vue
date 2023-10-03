@@ -9,11 +9,7 @@
           <Button class="auth" icon="pi pi-google" severity="info" aria-label="User" label="Iniciar sesión" @click="googleAuth"/>
         </div>
         <div v-else>
-          <RouterLink to="/profile">
-            <Button plain text> {{ username }} </Button>
-          </RouterLink>
-          &nbsp;
-          <Button class="auth" icon="pi pi-sign-out" severity="info" aria-label="User" label="Cerrar sesión" @click="singOutFirebase"/>
+          <Button icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
         </div>
       </template>
     </Menubar >
@@ -22,8 +18,10 @@
 
 <script>
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc, getDocs, query, collection, where } from "firebase/firestore";
 import { useFirebaseAuth, getCurrentUser } from 'vuefire';
-import { RouterLink } from 'vue-router'
+import { User, userConverter } from '../User.js';
+const db = getFirestore();
 
 export default {
   data() {
@@ -50,12 +48,30 @@ export default {
           to: '/graph'
         }
       ],
+      itemsAux: [],
       user: null,
       username: "",
-      logged: this.userLogged()
+      logged: false
     }
   },
   methods: {
+
+    async initialEnvironment() {
+      this.logged = await this.userLogged();
+      if(this.items.length < 5 && this.logged) {
+        this.items.push(
+          {
+            label: 'Perfil',
+            icon: 'pi pi-fw pi-user',
+            to: '/profile'
+          }
+        )
+      }
+      if(!this.logged) {
+        this.itemsAux = this.items;
+        this.items = [];
+      }
+    },
 
     async singOutFirebase() {
       const auth = useFirebaseAuth();
@@ -68,10 +84,9 @@ export default {
       this.logged = loggedOut;
       this.currentUser = null;
       this.$router.push('/');
-    },
-
-    displayProfile(){
-
+      if(this.items.length == 5) {
+        this.items.pop();
+      }
     },
 
     getUsername(user) {
@@ -87,26 +102,34 @@ export default {
 
     async userLogged() {
       const userAuth = await getCurrentUser();
-      if(userAuth) {
+      if(userAuth != null) {
         this.user = userAuth;
         this.username = this.getUsername(userAuth);
         return true;
       }
-      else {
+      else { 
         return false;
       }
     },
 
-    async fetchPostRegister(data) {
-      let endpoint = "192.168.1.78:3000/register";
-      const options = {
-        method: "POST",
-        headers: {'Content-Type': "application/x-www-form-urlencoded"},
-        mode: 'no-cors',
-        body: JSON.stringify(data, null, 2)
-      };
-      await fetch(endpoint, options);
+    async refreshVotes() {
+      const qDates = query(collection(db, "votes"));
+      const queryDatesSnap = await getDocs(qDates); 
+      const votes = queryDatesSnap.docs[0].data();
+      votes.votes = {}
+      const endDate = new Date(votes.endDate.toDate())
+      const dateRef = doc(db, "votes", `${endDate.getDate()}-${endDate.getMonth() + 1}-${endDate.getFullYear()}`);   
+      setDoc(dateRef, votes);
 
+      const qUsers = query(collection(db, "users"), where("email", "not-in", ["voleylock@gmail.com"]));
+      const queryUsersSnap = await getDocs(qUsers);
+      queryUsersSnap.docs.forEach((user, index) => {  
+        const currentUser = user.data();
+        const userRef = doc(db, "users", currentUser.id).withConverter(userConverter);    
+        currentUser.votes = {};
+        currentUser.voted = false;
+        setDoc(userRef, currentUser);
+      });
     },
 
     async googleAuth() {
@@ -123,18 +146,28 @@ export default {
           this.$swal('ERROR en la autenticación', error.toString(), 'error')
       });
       if (this.userLogged) {
+          this.items = this.itemsAux;
           this.user = singInData.user;      
-          this.username = this.getUsername(singInData.user);
-          this.logged = singInData.logged;
-          const userObj = {
-            id: this.user.uid,
-            name: this.user.displayName,
-            email: this.user.email,
-            photo: `${this.user.photoURL}`
+          this.logged = singInData.logged;          
+          const userFirestore = new User(this.user.uid, this.user.displayName, this.user.email, this.user.photoURL);
+          const ref = doc(db, "users", this.user.uid).withConverter(userConverter);
+          const userSnap = await getDoc(ref);
+          if (!userSnap.exists()) {
+              this.refreshVotes();
+              setDoc(ref, userFirestore);
           }
-          this.fetchPostRegister(userObj)
+          this.items.push(
+            {
+              label: 'Perfil',
+              icon: 'pi pi-fw pi-user',
+              to: '/profile'
+            }
+          )
       };
     }
+  },
+  mounted() {
+    this.initialEnvironment()
   }
 
 }
