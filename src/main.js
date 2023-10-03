@@ -2,9 +2,11 @@ import './assets/main.css'
 
 import { createApp } from 'vue'
 import { VueFire, VueFireAuth } from 'vuefire'
-import { firebaseApp } from './firebase.js'
+import { firebaseApp, db } from './firebase.js'
+import { doc, setDoc, addDoc, getDoc, Timestamp } from "firebase/firestore"; 
 import App from './App.vue'
 import router from './router'
+import { User, userConverter } from './User'
 
 import PrimeVue from 'primevue/config'
 import 'primevue/resources/themes/saga-blue/theme.css' //theme
@@ -29,6 +31,23 @@ import Steps from 'primevue/steps';
 import Message from 'primevue/message';
 
 import ToastService from 'primevue/toastservice';
+const admin = new User("admin","admin", "voleylock@gmail.com", "");
+const adminRef = doc(db, "users", admin.name).withConverter(userConverter);
+
+const timeLimitVotes = 5;
+const date = new Date();
+const nextDate = new Date(date);
+nextDate.setDate(date.getDate() +  timeLimitVotes);
+const dateRef = doc(db, "votes", `${nextDate.getDate()}-${nextDate.getMonth() + 1}-${nextDate.getFullYear()}`);
+const dateSnap = await getDoc(dateRef);
+const adminSnap = await getDoc(adminRef);
+if (!adminSnap.exists()) {
+    setDoc(adminRef, admin);
+}
+
+if (!dateSnap.exists()) {
+    await setDoc(dateRef, {endDate: nextDate, initialDate: date, votes: {}})
+}
 
 const app = createApp(App)
 app.use(PrimeVue)

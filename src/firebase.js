@@ -1,13 +1,14 @@
 import { initializeApp } from 'firebase/app'
+import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCiE3x-D8uzBDfzepyjS4HwGrol_PS3e9I",
-  authDomain: "volley-rank-105ba.firebaseapp.com",
-  projectId: "volley-rank-105ba",
-  storageBucket: "volley-rank-105ba.appspot.com",
-  messagingSenderId: "639696193648",
-  appId: "1:639696193648:web:1d3f896994efc79bfb0cb5",
-  measurementId: "G-L17C854GWV"
+  apiKey: "AIzaSyDjwJRaZR7zN8tkhSfbj583WZEexE6PrxY",
+  authDomain: "volley-lock.firebaseapp.com",
+  projectId: "volley-lock",
+  storageBucket: "volley-lock.appspot.com",
+  messagingSenderId: "222174613866",
+  appId: "1:222174613866:web:5fa3f46f52e68f1357d513"
 };
 
 export const firebaseApp = initializeApp(firebaseConfig);
+export const db = getFirestore(firebaseApp);
