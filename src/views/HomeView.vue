@@ -11,7 +11,7 @@
   </main>
 </template>
 
-<style>
+<style scoped>
 
 header {
   margin-top: 10%;

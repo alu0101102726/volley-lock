@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <Card class="card" style="width: 35em">
+    <Card class="card" style="min-width: 35em">
       <template #header>
         <vue-avatar class="vue-avatar" :size="100" border-radius="70%">
           <img class="profimage" src="" alt="Foto de perfil">
@@ -10,12 +10,12 @@
       <template #title> Perfil </template>
       <template #content>    
         <span class="p-float-label">
-            <InputText id="user" v-model="user" disabled />
+            <InputText id="user" class="usrinput" v-model="user" disabled />
             <label for="user">Usuario</label>
         </span>
         <br/>
         <span class="p-float-label">
-            <InputText id="email" v-model="email" disabled/>
+            <InputText id="email" class="emailinput" v-model="email" disabled />
             <label for="email">Email</label>
         </span>
         <br/>
@@ -25,7 +25,7 @@
         </span>
       </template>
       <template #footer>
-          <Button icon="pi pi-check" label="Save" @click="sendNewInfo()"/>
+          <Button icon="pi pi-check" label="Save" :loading="loading" @click="sendNewInfo()"/>
           <Button icon="pi pi-times" label="Cancel" severity="secondary" style="margin-left: 0.5em" />
       </template>
     </Card>
@@ -35,19 +35,17 @@
 
 <script>
 import { getCurrentUser } from 'vuefire';
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import VueAvatar from "@webzlodimir/vue-avatar";
 import "@webzlodimir/vue-avatar/dist/style.css";
-
-const getBase64StringFromDataURL = (dataURL) =>
-    dataURL.replace('data:', '').replace(/^.+,/, '');
+import { User, userConverter } from '../User.js';
+const db = getFirestore();
 
 export default {
   data() {
-      return {
-        profilePic: null,
-        user: null,
-        email: null
-      }
+    return {
+      loading: false
+    }
   },
   methods: {
 
@@ -56,46 +54,46 @@ export default {
       const file = event.files[0];
       const reader = new FileReader();
       reader.readAsBinaryString(file);
-      const user = this.user;
-
       reader.onload = function (event) {
           vueProfile.setAttribute("src", `data:${file.type};base64,${btoa(event.target.result)}`)
-          vueProfile.setAttribute("alt", user)
       };
     },
 
     async sendNewInfo() {
+      this.loading = true;
       const vueProfile = document.querySelector(".profimage");
+      const vueUsername = document.querySelector(".usrinput");
+      const vueEmail = document.querySelector(".emailinput");
       const user = await getCurrentUser();
-      const imageObj = {id: user.uid, name: user.displayName, email: user.email, photo: vueProfile.getAttribute("src").toString()}
-      let endpoint = "192.168.1.78:3000/profile";
-      const options = {
-        method: "POST",
-        headers: {'Content-Type': "application/x-www-form-urlencoded"},
-        mode: 'no-cors',
-        body: JSON.stringify(imageObj)
-      };
-      await fetch(endpoint, options);
+      const ref = doc(db, "users", user.uid).withConverter(userConverter);   
+      const userSnap = await getDoc(ref);
+      const userFirestore = new User(vueUsername.getAttribute("value").toString(), vueEmail.getAttribute("value").toString(), vueProfile.getAttribute("src").toString(), userSnap.data().voted, userSnap.data().votes);  
+      if (userSnap.exists()) {
+          setDoc(ref, userFirestore);
+      }
+      this.loading = false;
     }
   },
   mounted: async () => {
     const user = await getCurrentUser();
-    const profile = await fetch(`192.168.1.78:3000/${user.uid}`);
-    const data = await profile.json();
     const vueProfile = document.querySelector(".profimage");
-    if(user != null) {
-      vueProfile.setAttribute("src", data.photo)
+    const vueUsername = document.querySelector(".usrinput");
+    const vueEmail = document.querySelector(".emailinput");
+    const ref = doc(db, "users", user.uid).withConverter(userConverter);
+    const userSnap = await getDoc(ref);
+    if(userSnap.exists()) {
+      vueProfile.setAttribute("src", userSnap.data().photo);
+      vueUsername.setAttribute("value", userSnap.data().name);
+      vueEmail.setAttribute("value", userSnap.data().email);
     }
   }
 }
     
 </script>
 
-<style>
+<style scoped>
 
 .container {
-  margin: auto;
-  width: 50%;
 
 }
 
