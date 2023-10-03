@@ -14,7 +14,9 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/vue-fontawesome": "^3.0.3",
     "@webzlodimir/vue-avatar": "^0.0.8",
+    "dotenv": "^16.3.1",
     "firebase": "^9.22.0",
+    "firebase-admin": "^11.10.1",
     "primeicons": "^6.0.1",
     "primevue": "^3.29.0",
     "sortablejs": "^1.15.0",
@@ -24,7 +26,10 @@
     "vue-docgen-cli": "^4.67.0",
     "vue-router": "^4.0.13",
     "vue-sweetalert2": "^5.0.5",
-    "vuefire": "^3.1.0"
+    "vue3-touch-events": "^4.1.6",
+    "vuedraggable": "^2.24.3",
+    "vuefire": "^3.1.0",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",
