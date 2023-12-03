@@ -1,0 +1,1 @@
+import{_ as s,o as c,c as o,p as _,g as t,e as a}from"./index-1a19c482.js";const d={},p=e=>(_("data-v-7c4f08d0"),e=e(),t(),e),n={class:"about"},r=p(()=>a("h1",null,"This is an graph page",-1)),i=[r];function h(e,f){return c(),o("div",n,i)}const u=s(d,[["render",h],["__scopeId","data-v-7c4f08d0"]]);export{u as default};
