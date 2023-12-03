@@ -1,0 +1,9 @@
+{ 
+    "jsonConfig" : {
+        "registrationDateStart": "2023/12/04",
+        "registrationDateEnd": "2023/12/05",
+        "votesDateStart": "2023/12/06",
+        "votesDateEnd": "2023/12/13",
+        "timeLimitVotes": 7
+    }
+}

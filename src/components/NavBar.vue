@@ -2,14 +2,14 @@
   <div class="card">
     <Menubar  :model="items">
       <template #start>
-        <img alt="logo" src="../assets/blue-lock.svg" height="40" class="mr-2" />
+        <img alt="logo" src="../assets/volley-lock-icon-noletter.svg" height="40" class="mr-2" />
       </template>
       <template #end>
         <div v-if="!logged">
-          <Button class="auth" icon="pi pi-google" severity="info" aria-label="User" label="Iniciar sesión" @click="googleAuth"/>
+          <Button icon="pi pi-google" severity="info" aria-label="User" label=" Iniciar sesión" @click="googleAuth"/>
         </div>
         <div v-else>
-          <Button icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
+          <Button severity="danger" icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
         </div>
       </template>
     </Menubar >
@@ -46,6 +46,11 @@ export default {
           label: 'Gráfica',
           icon: 'pi pi-fw pi-chart-line',
           to: '/graph'
+        },
+        {
+          label: 'Youtube',
+          icon: 'pi pi-fw pi-youtube',
+          to: '/youtube'
         }
       ],
       itemsAux: [],
@@ -172,3 +177,9 @@ export default {
 
 }
 </script>
+
+<style>
+Button {
+  border-radius: 15px;
+}
+</style>

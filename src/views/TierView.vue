@@ -1,5 +1,5 @@
 <template>
-  <div class="tier-list" v-if="!voted">
+  <div class="tier-list" v-if="!voted && votation">
     <h1>TIER LIST - {{ listName }}</h1>
     <div class="list-group row">
       <input type="text" value="S" class="tier6 level" readonly>
@@ -32,15 +32,28 @@
            :alt="image.alt"
            :src="image.src">
     </div>
-    <Button type="button" label="Enviar Resultados" icon="pi pi-check" :loading="loading" @click="sendInformation()"/>
+    <Button style="backgroundColor: var(pink-200)" type="button" label="Enviar Resultados" icon="pi pi-check" :loading="loading" @click="sendInformation()"/>
+  </div>
+  <div class="registration" v-else>
+    <h1>TIER LIST - {{ listName }}</h1>
+    
+    <h2>La votación comienza en:</h2>
+    <div id="timer">
+      <span id="days"></span>días
+      <span id="hours"></span>horas
+      <span id="minutes"></span>minutos
+      <span id="seconds"></span>segundos
+    </div>
+
   </div>
 </template>
 
 <script>
 import Sortable from 'sortablejs'
 import { User, userConverter } from '../User.js';
-import { getFirestore, where, getDocs, collection, query, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, where, getDocs, collection, query, doc, getDoc, setDoc } from "firebase/firestore";
 import { getCurrentUser } from 'vuefire';
+import { timeBetweenDates } from '../utils/timer'
 const db = getFirestore();
 
 export default {
@@ -49,7 +62,11 @@ export default {
       listName: 'Volley Lock',
       images: [],
       loading: false,
-      voted: false
+      voted: false,
+      registration: false,
+      votation: false,
+      jsonConfig: {},
+      timer: null
     }
   },
 
@@ -103,7 +120,6 @@ export default {
                 score = 1;
               break;
             }
-            console.log(votes.votes[`${currentImage.alt}`]);
             if(votes.votes[`${currentImage.alt}`]) {
               votes.votes[`${currentImage.alt}`] += score
             }
@@ -142,27 +158,41 @@ export default {
         
       }
     },
-    mounted() {
-      let rows = document.getElementsByClassName('sort');
-      Array.from(rows).forEach(row => {
-          new Sortable(row, {
-              group: 'shared', // set both lists to same group
-              animation: 500
-          });
-      });
+    async mounted() {
+      const q = query(collection(db, "config"));
+      const queryConfigSnap = await getDocs(q);
+      this.jsonConfig = queryConfigSnap.docs[0].data();
+      const currentDate = new Date();
+      const voteDate = new Date(this.jsonConfig.votesDateStart);
+      if (currentDate > voteDate) {
+        this.registration = false;
+        this.votation = true;
+        let rows = document.getElementsByClassName('sort');
+        Array.from(rows).forEach(row => {
+            new Sortable(row, {
+                group: 'shared', // set both lists to same group
+                animation: 500
+            });
+        });
+        
+        this.getImages();      
+      }
       
-      this.getImages();      
+      this.timer = setInterval(function() {
+        timeBetweenDates(voteDate);
+      }, 1000);
     },
+    beforeUnmount() {
+      if (this.timer) {
+        clearTimeout(this.timer);
+      }
+    }
 
 
 }
 </script>
 
 <style scoped>
-  
-  .tier-list {
-    margin-top: 10%;
-  }
 
   h1 {
     font-style: italic;
@@ -246,4 +276,11 @@ export default {
     height: 96px;
     cursor: move;
   }
+
+  .registration {
+    display: flex;
+    flex-direction: column;
+    place-items: center;
+  }
+  
 </style>

@@ -1,6 +1,6 @@
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="../assets/blue-lock.png" width="125" height="125" />
+    <img alt="Vue logo" class="logo" src="../assets/volley-lock-icon.png" width="125" height="125" />
 
     <div class="card flex justify-content-center">    
       <h1> VOLLEY LOCK </h1>

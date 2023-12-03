@@ -110,10 +110,6 @@ export default {
 </script>
 
 <style scoped>
-  
-  .tier-list {
-    margin-top: 10%;
-  }
 
   h1 {
     font-style: italic;

@@ -17,3 +17,18 @@ a,
     background-color: hsla(160, 100%, 37%, 0.2);
   }
 }
+
+#timer {
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  color: white;
+  letter-spacing: -1px;
+}
+#timer span {
+  font-size: 60px;
+  color: white;
+  margin: 0 3px 0 15px;
+}
+#timer span:first-child {
+  margin-left: 0;
+}
