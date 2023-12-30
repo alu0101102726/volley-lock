@@ -40,9 +40,13 @@
     <h2>La votación comienza en:</h2>
     <div id="timer">
       <span id="days"></span>días
+      <br/>
       <span id="hours"></span>horas
+      <br/>
       <span id="minutes"></span>minutos
+      <br/>
       <span id="seconds"></span>segundos
+      <br/>
     </div>
 
   </div>

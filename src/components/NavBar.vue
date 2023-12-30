@@ -1,19 +1,17 @@
 <template>
-  <div class="card">
-    <Menubar  :model="items">
-      <template #start>
-        <img alt="logo" src="../assets/volley-lock-icon-noletter.svg" height="40" class="mr-2" />
-      </template>
-      <template #end>
-        <div v-if="!logged">
-          <Button icon="pi pi-google" severity="info" aria-label="User" label=" Iniciar sesión" @click="googleAuth"/>
-        </div>
-        <div v-else>
-          <Button severity="danger" icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
-        </div>
-      </template>
-    </Menubar >
-  </div>
+  <Menubar  :model="items">
+    <template #start>
+      <img alt="logo" src="../assets/volley-lock-icon-noletter.svg" height="40" class="mr-2" />
+    </template>
+    <template #end>
+      <div v-if="!logged">
+        <Button icon="pi pi-google" severity="info" aria-label="User" label=" Iniciar sesión" @click="googleAuth"/>
+      </div>
+      <div v-else>
+        <Button severity="danger" icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
+      </div>
+    </template>
+  </Menubar >
 </template>
 
 <script>

@@ -31,6 +31,8 @@ import Textarea from 'primevue/textarea';
 import Steps from 'primevue/steps';
 import Message from 'primevue/message';
 import TabView from 'primevue/tabview';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import TabPanel from 'primevue/tabpanel';
 
 import ToastService from 'primevue/toastservice';
@@ -78,4 +80,6 @@ app.component('Steps', Steps)
 app.component('Message', Message)
 app.component('TabView',TabView)
 app.component('TabPanel',TabPanel)
+app.component('DataTable', DataTable)
+app.component('Column', Column)
 app.mount('#app')

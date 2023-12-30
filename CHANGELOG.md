@@ -1,15 +1,20 @@
 # VOLLEY-LOCK
+
+## V1.0.0 - [30/12/2023] - VOLLEYLOCK
+
 ## `Added`
-### [03/12/2023] - VOLLEYLOCK
+### VOLLEYLOCK
 * Añadida cuenta atrás votación
 * Nueva pantalla de votación cerrada
 * Nueva configuración en Firebase fechas inicio votos y registros
+* Cuenta atrás para el registro
 
 ## `Fixed`
-### [03/12/2023] - VOLLEYLOCK
+### VOLLEYLOCK
 * Arreglos imágenes previsualización videos Youtube
 
 ## `Changed`
-### [03/12/2023] - VOLLEYLOCK
+### VOLLEYLOCK
 * Estilos nuevo logo
 * Cambios en los logos
+* Mejora pantalla inicio información de bienvenida
