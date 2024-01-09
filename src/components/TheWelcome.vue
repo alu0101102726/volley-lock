@@ -4,9 +4,9 @@
     <template #icon>
       <SupportIcon />
     </template>
-    <template #heading> Registro </template>
+    <template #heading> Votación </template>
 
-    Para registrarse, el usuario debe iniciar sesión en Google (botón azul parte superior derecha). Para que finalice la fase de registro queda:
+    Para que comience la fase de votación queda:
       <div id="timer">
         <span id="days"></span>días
         <span id="hours"></span>horas

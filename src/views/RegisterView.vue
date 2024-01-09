@@ -1,12 +1,9 @@
 <template>
-  <img alt="Vue logo" class="logo" src="../assets/volley-lock-icon.png" width="125" height="125" />
   <header>
+    <img alt="Vue logo" class="logo" src="../assets/volley-lock-icon.png" width="125" height="125" />
     <h1> VOLLEY LOCK </h1>
   </header>
-  <main>
-    <TheWelcome />
-  </main>
-  <div v-if="!userLogged && params != null" class="container">  
+  <div v-if="!userLogged" class="container">  
     <Button icon="pi pi-google" severity="info" label=" Registrarse" @click="googleAuth"/>
   </div> 
 </template>
@@ -23,12 +20,11 @@ export default {
   data() {
     return {
       loading: false,
-      userLogged: false,
-      params: null
+      userLogged: false
     }
   },
-
   methods: {
+
     singOutFirebaseNoSwal() {
       const auth = useFirebaseAuth();
       signOut(auth);
@@ -36,8 +32,8 @@ export default {
 
     async googleAuth() {
       const user = firebaseLogin();
-      this.userLogged = (user) ? true : false; 
-      if (this.userLogged) {
+      this.userLogged = (user.currentUser) ? true : false; 
+      if (!this.userLogged) {
           this.user = user;         
           const userFirestore = new User(this.user.uid, this.user.displayName, this.user.email, this.user.photoURL);
           const ref = doc(db, "users", this.user.uid).withConverter(userConverter);
@@ -50,11 +46,15 @@ export default {
       };
     }
   },
-
-  mounted() { 
-    this.params = this.$route.params.code;
+  mounted() {    
+    const user = firebaseLogin();
+    this.userLogged = (user.currentUser) ? true : false; 
+    if ( this.userLogged ) {
+      this.$router.replace('/');
+    }    
   }
 }
+    
 </script>
 
 <style scoped>
@@ -77,6 +77,7 @@ header:after {
 h1 {
   position: relative;
   padding: 0.25em 1em;
+  margin-top: 3%;
   overflow: hidden;
   background: linear-gradient(white, white) no-repeat top center, linear-gradient(white, white) no-repeat bottom center;
   background-size: calc(100% - 1.7em) 1px;
@@ -97,9 +98,14 @@ h1:after {
   transform: skew(-45deg)
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+@media (max-width: 1024px) {
+  main {
+    display: flex;
+    flex-direction: row;
+    place-items: center;
+    margin-top: 5%;
+    padding-right: calc(var(--section-gap) / 2);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -123,6 +129,37 @@ h1:after {
     display: flex;
     place-items: flex-start;
     flex-wrap: wrap;
+  }
+}
+.container {
+  margin-top: 3%;
+  align-items: center;
+  text-align:center;
+  padding-top: 3%;
+}
+
+.profimage {
+  width: 200px;
+  height: 200px;
+}
+
+.vue-avatar {
+    display: block;
+    position: relative;
+    width: 100%;
+}
+
+.card {
+  align-items: center;
+  text-align:center;
+  padding-top: 3%;
+}
+
+@media (min-width: 1024px) {
+  .about {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
   }
 }
 </style>

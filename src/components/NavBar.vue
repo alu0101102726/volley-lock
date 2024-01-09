@@ -1,30 +1,33 @@
 <template>
-  <Menubar  :model="items">
+  <Menubar v-if="userLogged" :model="itemsLogged">
     <template #start>
       <img alt="logo" src="../assets/volley-lock-icon-noletter.svg" height="40" class="mr-2" />
     </template>
     <template #end>
-      <div v-if="!logged">
-        <Button icon="pi pi-google" severity="info" aria-label="User" label=" Iniciar sesión" @click="googleAuth"/>
-      </div>
-      <div v-else>
-        <Button severity="danger" icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
-      </div>
+      <Button severity="danger" icon="pi pi-sign-out" aria-label="User" @click="singOutFirebase"/>
+    </template>
+  </Menubar >
+  <Menubar v-else :model="itemAnonimus">
+    <template #start>
+      <img alt="logo" src="../assets/volley-lock-icon-noletter.svg" height="40" class="mr-2" />
+    </template>
+    <template #end>
+    <Button icon="pi pi-google" severity="info" label=" Iniciar sesión" @click="checkLogin"/>
     </template>
   </Menubar >
 </template>
 
 <script>
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, getDocs, query, collection, where } from "firebase/firestore";
-import { useFirebaseAuth, getCurrentUser } from 'vuefire';
+import { firebaseLogin, firebaseLogout } from "../utils/firebase";
+import { getFirestore, doc, setDoc, getDocs, query, collection, where } from "firebase/firestore";
+import { useFirebaseAuth } from 'vuefire';
 import { User, userConverter } from '../User.js';
 const db = getFirestore();
 
 export default {
   data() {
     return {
-      items: [
+      itemsLogged: [
         {
           label: 'Home',
           icon: 'pi pi-fw pi-home',
@@ -41,55 +44,43 @@ export default {
           to: '/results'
         },
         {
-          label: 'Gráfica',
-          icon: 'pi pi-fw pi-chart-line',
-          to: '/graph'
+          label: 'Youtube',
+          icon: 'pi pi-fw pi-youtube',
+          to: '/youtube'
+        }
+      ],
+      itemAnonimus: [
+        {
+          label: 'Home',
+          icon: 'pi pi-fw pi-home',
+          to: '/'
+        },
+        {
+          label: 'Resultados',
+          icon: 'pi pi-fw pi-sort-amount-up-alt',
+          to: '/results'
         },
         {
           label: 'Youtube',
           icon: 'pi pi-fw pi-youtube',
           to: '/youtube'
         }
+
       ],
-      itemsAux: [],
       user: null,
       username: "",
-      logged: false
+      userLogged: false
     }
   },
   methods: {
 
-    async initialEnvironment() {
-      this.logged = await this.userLogged();
-      if(this.items.length < 5 && this.logged) {
-        this.items.push(
-          {
-            label: 'Perfil',
-            icon: 'pi pi-fw pi-user',
-            to: '/profile'
-          }
-        )
-      }
-      if(!this.logged) {
-        this.itemsAux = this.items;
-        this.items = [];
-      }
+    checkLogin() {
+      (firebaseLogin().currentUser != null) ? this.userLogged = true : this.$swal('No estás registrad@ en el proyecto', '', 'error');
     },
 
-    async singOutFirebase() {
-      const auth = useFirebaseAuth();
-      const loggedOut = await signOut(auth).then(() => {
-          this.$swal('Cierre de sesión con éxito', '', 'success')
-          return false;
-      }).catch((error) => {
-          this.$swal('ERROR al cerrar sesión', error.toString(), 'error')
-      });
-      this.logged = loggedOut;
+    async singOutFirebase() {    
+      this.userLogged = await firebaseLogout(this.$swal);
       this.currentUser = null;
-      this.$router.push('/');
-      if(this.items.length == 5) {
-        this.items.pop();
-      }
     },
 
     getUsername(user) {
@@ -101,18 +92,6 @@ export default {
     singOutFirebaseNoSwal() {
       const auth = useFirebaseAuth();
       signOut(auth);
-    },
-
-    async userLogged() {
-      const userAuth = await getCurrentUser();
-      if(userAuth != null) {
-        this.user = userAuth;
-        this.username = this.getUsername(userAuth);
-        return true;
-      }
-      else { 
-        return false;
-      }
     },
 
     async refreshVotes() {
@@ -135,43 +114,11 @@ export default {
       });
     },
 
-    async googleAuth() {
-      const provider = new GoogleAuthProvider();
-      const auth = useFirebaseAuth();
-      (this.userLogged) ? this.singOutFirebaseNoSwal() : false;
-      const singInData = await signInWithPopup(auth, provider)
-        .then((result) => {
-          return {            
-            user : result.user,
-            logged : true
-          }
-        }).catch((error) => {
-          this.$swal('ERROR en la autenticación', error.toString(), 'error')
-      });
-      if (this.userLogged) {
-          this.items = this.itemsAux;
-          this.user = singInData.user;      
-          this.logged = singInData.logged;          
-          const userFirestore = new User(this.user.uid, this.user.displayName, this.user.email, this.user.photoURL);
-          const ref = doc(db, "users", this.user.uid).withConverter(userConverter);
-          const userSnap = await getDoc(ref);
-          if (!userSnap.exists()) {
-              this.refreshVotes();
-              setDoc(ref, userFirestore);
-          }
-          this.items.push(
-            {
-              label: 'Perfil',
-              icon: 'pi pi-fw pi-user',
-              to: '/profile'
-            }
-          )
-      };
-    }
   },
   mounted() {
-    this.initialEnvironment()
-  }
+    const user = firebaseLogin();
+    this.userLogged = (user.currentUser) ? true : false;
+  },
 
 }
 </script>
